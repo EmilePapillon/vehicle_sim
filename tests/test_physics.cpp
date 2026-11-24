@@ -88,6 +88,31 @@ TEST(static_equilibrium) {
   CHECK_NEAR(t.roll, 0.0, 1e-6);
 }
 
+TEST(parked_at_full_lock_does_not_creep) {
+  // Regression: camber thrust at standstill plus non-decaying slip states made a braked,
+  // steered car creep while one slip angle ramped up linearly.
+  Vehicle v;
+  v.reset();
+  DriverInputs in;
+  in.brake = 1.0;
+  v.setInputs(in);
+  v.advance(1.0);
+  for (int k = 0; k < 20; ++k) {  // wind the wheel to full right lock, then hold
+    in.steer = std::max(in.steer - 0.5, -deg2rad(v.params().steering.max_angle));
+    v.setInputs(in);
+    v.advance(0.5);
+  }
+  const auto& t = v.telemetry();
+  CHECK_NEAR(t.x, 0.0, 1e-3);
+  CHECK_NEAR(t.y, 0.0, 1e-3);
+  CHECK_NEAR(t.yaw, 0.0, 1e-4);
+  CHECK_NEAR(t.speed, 0.0, 1e-5);
+  for (const auto& w : t.wheel) {
+    CHECK_NEAR(rad2deg(w.slip_angle), 0.0, 1e-3);
+    CHECK_NEAR(w.fy, 0.0, 1.0);
+  }
+}
+
 TEST(coasting_conserves_energy_without_losses) {
   Vehicle v;
   makeLinearBicycle(v);

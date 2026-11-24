@@ -3,7 +3,9 @@
 namespace vd {
 
 namespace {
-constexpr double kLowSpeed = 3.0;  // below this, tire slip damping fades in [m/s]
+constexpr double kLowSpeed = 3.0;        // below this, tire slip damping fades in [m/s]
+constexpr double kMinRelaxSpeed = 0.3;   // slip states still decay at standstill [m/s]
+constexpr double kCamberRollSpeed = 1.0; // camber thrust builds up with rolling speed [m/s]
 }
 
 Vehicle::Vehicle(const VehicleParams& p) : p_(p) {
@@ -343,11 +345,16 @@ void Vehicle::derivatives(const State& s, State& ds, Telemetry* tel) const {
     const double R = tp.radius;
     const double absvx = std::abs(vxw);
 
-    ds[size_t(K0) + i] = (w * R - vxw - absvx * kappa) / tp.relaxation_long;
-    ds[size_t(A0) + i] = (-vyw - absvx * alpha) / tp.relaxation_lat;
+    // Relaxation-length slip dynamics. The decay speed has a floor so the carcass deflection
+    // bleeds off at standstill instead of integrating creep forever (identical above 0.3 m/s).
+    const double relaxSpeed = std::max(absvx, kMinRelaxSpeed);
+    ds[size_t(K0) + i] = (w * R - vxw - relaxSpeed * kappa) / tp.relaxation_long;
+    ds[size_t(A0) + i] = (-vyw - relaxSpeed * alpha) / tp.relaxation_lat;
 
     const double gamma = sideSign(int(i)) * deg2rad(sp.static_camber) - sp.camber_roll_coeff * s[PHI];
-    TireInput tin{fz[i], clamp(kappa, -1.0, 3.0), clamp(alpha, -1.4, 1.4), gamma};
+    // Camber thrust is a rolling effect: a stationary tilted tire produces no side force.
+    const double camberThrust = gamma * smoothstep(0.0, kCamberRollSpeed, absvx);
+    TireInput tin{fz[i], clamp(kappa, -1.0, 3.0), clamp(alpha, -1.4, 1.4), camberThrust};
     TireForces f = tires_[a]->compute(tin, tp);
 
     // Low-speed slip damping (relaxation-length models are undamped at standstill).
