@@ -1,0 +1,9 @@
+{
+  "name": "acceleration",
+  "vehicle": "../vehicles/sedan.json",
+  "duration": 14.0,
+  "initial_speed": 0.0,
+  "maneuver": {
+    "speed": {"type": "throttle", "value": 1.0, "t_start": 0.5}
+  }
+}

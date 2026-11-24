@@ -1,0 +1,11 @@
+{
+  "name": "constant_radius",
+  "vehicle": "../vehicles/sedan.json",
+  "duration": 40.0,
+  "output_rate": 50,
+  "initial_speed": 8.0,
+  "maneuver": {
+    "steer": {"type": "circle", "radius": 40, "laps": 4},
+    "speed": {"type": "hold", "target": 8.0, "accel": 0.25}
+  }
+}

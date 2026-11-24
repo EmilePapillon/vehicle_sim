@@ -1,0 +1,215 @@
+{
+  "name": "Sports coupe",
+  "chassis": {
+    "mass": 1180,
+    "wheelbase": 2.65,
+    "weight_front": 0.5,
+    "cg_height": 0.46,
+    "yaw_inertia": 2100,
+    "roll_inertia": 520,
+    "pitch_inertia": 2000,
+    "unsprung_mass_front": 42,
+    "unsprung_mass_rear": 38,
+    "wheel_inertia": 1.1,
+    "pitch_center_height": 0
+  },
+  "steering": {
+    "ratio": 14,
+    "ackermann": 0.4,
+    "max_angle": 540
+  },
+  "suspension": {
+    "front": {
+      "model": 0,
+      "spring_rate": 60000,
+      "motion_ratio": 1,
+      "progression": 4,
+      "arb_rate": 20000,
+      "damper_bump": 3500,
+      "damper_rebound": 5500,
+      "damper_knee": 0.12,
+      "damper_high_speed_ratio": 0.4,
+      "bump_stop_gap": 0.07,
+      "bump_stop_rate": 250000,
+      "roll_center_height": 0.06,
+      "track": 1.56,
+      "static_camber": -1,
+      "camber_roll_coeff": 0.6,
+      "toe": 0
+    },
+    "rear": {
+      "model": 0,
+      "spring_rate": 55000,
+      "motion_ratio": 1,
+      "progression": 4,
+      "arb_rate": 12000,
+      "damper_bump": 3200,
+      "damper_rebound": 5000,
+      "damper_knee": 0.12,
+      "damper_high_speed_ratio": 0.4,
+      "bump_stop_gap": 0.07,
+      "bump_stop_rate": 250000,
+      "roll_center_height": 0.11,
+      "track": 1.54,
+      "static_camber": -1.5,
+      "camber_roll_coeff": 0.7,
+      "toe": 0.15
+    }
+  },
+  "tire": {
+    "front": {
+      "model": 2,
+      "radius": 0.315,
+      "mu": 1.25,
+      "nominal_load": 4000,
+      "load_sensitivity": -0.12,
+      "cornering_stiffness": 19,
+      "cs_load_peak": 2,
+      "longitudinal_stiffness": 20,
+      "shape_lat": 1.35,
+      "curvature_lat": -0.6,
+      "shape_long": 1.65,
+      "curvature_long": 0.1,
+      "camber_stiffness": 0.8,
+      "pneumatic_trail": 0.035,
+      "relaxation_long": 0.12,
+      "relaxation_lat": 0.35,
+      "rolling_resistance": 0.012
+    },
+    "rear": {
+      "model": 2,
+      "radius": 0.315,
+      "mu": 1.25,
+      "nominal_load": 4000,
+      "load_sensitivity": -0.12,
+      "cornering_stiffness": 21,
+      "cs_load_peak": 2,
+      "longitudinal_stiffness": 20,
+      "shape_lat": 1.35,
+      "curvature_lat": -0.6,
+      "shape_long": 1.65,
+      "curvature_long": 0.1,
+      "camber_stiffness": 0.8,
+      "pneumatic_trail": 0.035,
+      "relaxation_long": 0.12,
+      "relaxation_lat": 0.35,
+      "rolling_resistance": 0.012
+    }
+  },
+  "engine": {
+    "torque_scale": 1.35,
+    "idle_rpm": 900,
+    "rev_limit": 7200,
+    "inertia": 0.18,
+    "friction_base": 15,
+    "friction_per_krpm": 4,
+    "torque_curve": [
+      [
+        800,
+        150
+      ],
+      [
+        1500,
+        205
+      ],
+      [
+        2500,
+        245
+      ],
+      [
+        3500,
+        268
+      ],
+      [
+        4500,
+        275
+      ],
+      [
+        5500,
+        265
+      ],
+      [
+        6500,
+        238
+      ],
+      [
+        7200,
+        205
+      ]
+    ]
+  },
+  "clutch": {
+    "max_torque": 550,
+    "slip_speed": 30,
+    "engage_rpm": 1800
+  },
+  "gearbox": {
+    "num_gears": 6,
+    "ratio_1": 3.4,
+    "ratio_2": 2.1,
+    "ratio_3": 1.52,
+    "ratio_4": 1.16,
+    "ratio_5": 0.94,
+    "ratio_6": 0.79,
+    "ratio_7": 0.7,
+    "ratio_8": 0.62,
+    "final_drive": 3.9,
+    "efficiency": 0.93,
+    "automatic": 1,
+    "shift_up_rpm": 6600,
+    "shift_down_rpm": 2600,
+    "shift_time": 0.18
+  },
+  "drivetrain": {
+    "layout": 0,
+    "awd_front_split": 0.4
+  },
+  "diff": {
+    "front": {
+      "type": 0,
+      "preload": 40,
+      "locking": 0.3,
+      "viscous": 60,
+      "lock_stiffness": 20000,
+      "lock_damping": 200
+    },
+    "rear": {
+      "type": 2,
+      "preload": 40,
+      "locking": 0.3,
+      "viscous": 60,
+      "lock_stiffness": 20000,
+      "lock_damping": 200
+    },
+    "center": {
+      "type": 0,
+      "preload": 40,
+      "locking": 0.3,
+      "viscous": 60,
+      "lock_stiffness": 20000,
+      "lock_damping": 200
+    }
+  },
+  "brakes": {
+    "max_torque": 5600,
+    "front_bias": 0.68,
+    "handbrake_torque": 1600,
+    "lock_speed": 2
+  },
+  "aero": {
+    "air_density": 1.225,
+    "drag_area": 0.68,
+    "lift_area": 0.6,
+    "balance": 0.45
+  },
+  "aids": {
+    "abs": 1,
+    "tcs": 1,
+    "abs_slip": 0.12,
+    "tcs_slip": 0.12
+  },
+  "solver": {
+    "dt": 0.0005,
+    "integrator": 2
+  }
+}

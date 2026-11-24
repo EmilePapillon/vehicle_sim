@@ -1,0 +1,14 @@
+{
+  "name": "arb_sweep",
+  "vehicle": "../vehicles/sedan.json",
+  "duration": 6.0,
+  "initial_speed": 22.22,
+  "maneuver": {
+    "steer": {"type": "step", "angle_deg": 40, "t_start": 1.0},
+    "speed": {"type": "hold", "target": 22.22}
+  },
+  "sweep": [
+    {"param": "suspension.front.arb_rate", "values": [0, 12000, 25000, 40000]},
+    {"param": "tire.front.model", "values": [0, 1, 2]}
+  ]
+}

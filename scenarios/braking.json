@@ -1,0 +1,9 @@
+{
+  "name": "braking",
+  "vehicle": "../vehicles/sedan.json",
+  "duration": 6.0,
+  "initial_speed": 27.78,
+  "maneuver": {
+    "speed": {"type": "brake", "value": 0.8, "t_start": 0.5}
+  }
+}

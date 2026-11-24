@@ -1,0 +1,10 @@
+{
+  "name": "ramp_steer",
+  "vehicle": "../vehicles/sedan.json",
+  "duration": 14.0,
+  "initial_speed": 22.22,
+  "maneuver": {
+    "steer": {"type": "ramp", "rate_deg_s": 8, "t_start": 1.0},
+    "speed": {"type": "hold", "target": 22.22}
+  }
+}

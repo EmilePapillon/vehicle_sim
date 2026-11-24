@@ -1,0 +1,11 @@
+{
+  "name": "step_steer",
+  "vehicle": "../vehicles/sedan.json",
+  "duration": 6.0,
+  "output_rate": 100,
+  "initial_speed": 22.22,
+  "maneuver": {
+    "steer": {"type": "step", "angle_deg": 40, "t_start": 1.0, "ramp_time": 0.15},
+    "speed": {"type": "hold", "target": 22.22}
+  }
+}
