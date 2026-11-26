@@ -3,6 +3,8 @@
 A vehicle dynamics simulator with a C++20 physics core, a headless batch CLI, and a native
 macOS SwiftUI + Metal front-end.
 
+<img width="1909" height="958" alt="image" src="https://github.com/user-attachments/assets/32100e5c-f8ce-45c4-91fb-703e21a1ec0a" />
+
 ```
 core/      VehicleCore — C++20 physics library, no dependencies
 capi/      vd_capi.h — stable C API (used by the app; the integration point for Unreal, Python, …)
