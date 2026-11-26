@@ -103,8 +103,8 @@ struct ManeuverPreset: Identifiable, Hashable {
 struct Sample: Identifiable {
   let id: Int
   let t: Double
-  let slip: [Double]     // deg, FL FR RL RR
-  let fz: [Double]       // N
+  let slip: SIMD4<Double>  // deg, FL FR RL RR
+  let fz: SIMD4<Double>    // N
   let ax: Double, ay: Double  // g
   let yawRate: Double    // deg/s
   let beta: Double       // deg
@@ -117,6 +117,14 @@ extension vd_telemetry {
 
 // MARK: - Engine
 
+/// CADisplayLink needs an Objective-C target; this forwards to a closure on the main actor.
+/// The link does not keep its target alive, so the engine holds it.
+private final class DisplayLinkTarget: NSObject {
+  let action: @MainActor () -> Void
+  init(_ action: @escaping @MainActor () -> Void) { self.action = action }
+  @objc func fire() { MainActor.assumeIsolated { action() } }
+}
+
 @MainActor @Observable
 final class SimEngine {
   @ObservationIgnored let sim: OpaquePointer
@@ -124,6 +132,11 @@ final class SimEngine {
   private(set) var telemetry = vd_telemetry()
   private(set) var geometry = vd_geometry()
   private(set) var history: [Sample] = []
+  /// Telemetry as of the last history sample. The charts read this instead of `telemetry`,
+  /// which changes every tick, so they only re-render at `historyRate`.
+  private(set) var sampledTelemetry = vd_telemetry()
+  /// Fy(alpha) at static load per axle; recomputed only when parameters change.
+  private(set) var tireCurves: [[(alpha: Double, fy: Double)]] = [[], []]
   private(set) var trail: [SIMD2<Double>] = []
   private(set) var referencePath: [SIMD2<Double>] = []
   private(set) var groups: [ParamGroup] = []
@@ -140,7 +153,8 @@ final class SimEngine {
   private(set) var inputs = vd_inputs()
   @ObservationIgnored private var keys = Set<UInt16>()
   @ObservationIgnored private var keyMonitor: Any?
-  @ObservationIgnored private var timer: Timer?
+  @ObservationIgnored private var displayLink: CADisplayLink?
+  @ObservationIgnored private var displayLinkTarget: DisplayLinkTarget?
   @ObservationIgnored private var lastTick = CACurrentMediaTime()
   @ObservationIgnored private var lastSampleTime = -1.0
   @ObservationIgnored private var sampleCounter = 0
@@ -153,17 +167,21 @@ final class SimEngine {
     sim = vd_create()
     buildParams()
     vd_get_geometry(sim, &geometry)
+    refreshTireCurves()
     restart()
   }
 
   func start() {
-    guard timer == nil else { return }
+    guard displayLink == nil else { return }
     lastTick = CACurrentMediaTime()
-    let t = Timer(timeInterval: 1.0 / 120.0, repeats: true) { [weak self] _ in
-      MainActor.assumeIsolated { self?.tick() }
-    }
-    RunLoop.main.add(t, forMode: .common)
-    timer = t
+    // Tick in step with the display instead of on an unsynchronised timer.
+    let target = DisplayLinkTarget { [weak self] in self?.tick() }
+    let link = (NSScreen.main ?? NSScreen.screens[0]).displayLink(target: target, selector: #selector(DisplayLinkTarget.fire))
+    // 60 Hz matches the Metal view; on ProMotion displays the link would otherwise run at 120.
+    link.preferredFrameRateRange = CAFrameRateRange(minimum: 30, maximum: 60, preferred: 60)
+    link.add(to: .main, forMode: .common)
+    displayLink = link
+    displayLinkTarget = target
     keyMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .keyUp]) { [weak self] ev in
       nonisolated(unsafe) let event = ev  // local monitors are delivered on the main thread
       let consumed = MainActor.assumeIsolated { self?.handleKey(event) == nil }
@@ -200,7 +218,7 @@ final class SimEngine {
     vd_get_param(sim, key, &actual)
     if let p = paramsByKey[key], p.value != actual { p.sync(actual) }
     vd_get_geometry(sim, &geometry)
-    paramVersion += 1
+    paramsChanged()
   }
 
   private func syncAllParams() {
@@ -210,7 +228,17 @@ final class SimEngine {
       p.sync(v)
     }
     vd_get_geometry(sim, &geometry)
+    paramsChanged()
+  }
+
+  private func paramsChanged() {
     paramVersion += 1
+    refreshTireCurves()
+  }
+
+  private func refreshTireCurves() {
+    let loads = staticLoads
+    tireCurves = [tireCurve(axle: 0, fz: loads.front), tireCurve(axle: 1, fz: loads.rear)]
   }
 
   func resetParams() {
@@ -346,12 +374,13 @@ final class SimEngine {
 
     guard t.time - lastSampleTime >= 1.0 / Self.historyRate || t.time < lastSampleTime else { return }
     lastSampleTime = t.time
+    sampledTelemetry = t
     let w = t.wheels
     sampleCounter += 1
     history.append(Sample(
       id: sampleCounter, t: t.time,
-      slip: w.map { $0.slip_angle * 180 / .pi },
-      fz: w.map(\.fz),
+      slip: SIMD4(w.map { $0.slip_angle * 180 / .pi }),
+      fz: SIMD4(w.map(\.fz)),
       ax: t.ax / 9.80665, ay: t.ay / 9.80665,
       yawRate: t.yaw_rate * 180 / .pi, beta: t.sideslip * 180 / .pi, roll: t.roll * 180 / .pi))
     let cutoff = t.time - historyWindow
@@ -432,7 +461,7 @@ final class SimEngine {
   // MARK: Analysis helpers
 
   /// Lateral-force curve of an axle's tire at a given load (for the operating-point plot).
-  func tireCurve(axle: Int32, fz: Double, maxDeg: Double = 14, points: Int = 57) -> [(Double, Double)] {
+  func tireCurve(axle: Int32, fz: Double, maxDeg: Double = 14, points: Int = 57) -> [(alpha: Double, fy: Double)] {
     (0..<points).map { i in
       let a = -maxDeg + 2 * maxDeg * Double(i) / Double(points - 1)
       var fy = 0.0
